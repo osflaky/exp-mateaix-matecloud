@@ -1,0 +1,39 @@
+server:
+  # Default to the gateway's port (9010): in monolith mode there is no gateway,
+  # so the monolith answers on 9010 and the frontend's `/api -> 127.0.0.1:9010`
+  # proxy works unchanged — no frontend edits needed.
+  port: ${SERVER_PORT:9010}
+
+spring:
+  application:
+    name: mate-monolith
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  # Entry point only. Framework constants come from mate-defaults.yml; everything
+  # the monolith needs to OVERRIDE (rpc mode, Nacos off, autoconfig excludes,
+  # infra endpoints) lives in mate-infra-local.yml.
+  #
+  # Order matters: files imported via spring.config.import take precedence over
+  # this file AND over earlier imports — so mate-infra-local.yml (imported LAST)
+  # wins over mate-defaults.yml. This is the same mechanism by which a real
+  # service's Nacos `mate-infra` overrides mate-defaults.
+  config:
+    import:
+      - classpath:mate-defaults.yml
+      - classpath:mate-infra-local.yml
+
+# CORS for the admin UI when running standalone (no gateway in front).
+mate-cors:
+  allowed-origins: ${MATE_CORS_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
+  allowed-headers: "*"
+  allowed-methods: "*"
+
+# Behaviour captcha (carried over from mate-auth standalone config).
+aj:
+  captcha:
+    cache-type: redis
+    type: blockPuzzle
+    water-mark: MateCloud
+    req-frequency-limit-enable: false
+    history-data-clear-enable: true
+    check-repeat: 5
